@@ -20,21 +20,32 @@ public class GlobalCorsConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOrigins(allowedOrigins)
+        CorsRegistry config = registry.addMapping("/**")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
                 .allowedHeaders("*")
-                .allowCredentials(true)
                 .maxAge(3600);
+
+        if (allowedOrigins.length == 1 && "*".equals(allowedOrigins[0])) {
+            config.allowedOriginPatterns("*");
+        } else {
+            config.allowedOrigins(allowedOrigins);
+        }
+
+        // For production, prefer a safe list like https://example.com
+        // app.cors.allowed-origins=https://app.example.com,https://admin.example.com
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(allowedOrigins));
+        if (allowedOrigins.length == 1 && "*".equals(allowedOrigins[0])) {
+            configuration.addAllowedOriginPattern("*");
+        } else {
+            configuration.setAllowedOrigins(Arrays.asList(allowedOrigins));
+        }
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setAllowCredentials(true);
+        configuration.setAllowCredentials(false);
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
